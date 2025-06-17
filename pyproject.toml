@@ -1,0 +1,44 @@
+[project]
+name = "allocation"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "David M.", email = "mugi.dasha@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+allocation = "allocation:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "bandit>=1.8.3",
+    "detect-secrets>=1.5.0",
+    "pre-commit>=4.2.0",
+    "pytest>=8.4.0",
+    "pytest-cov>=6.2.1",
+    "ruff>=0.11.13",
+    "safety>=3.5.2",
+    "ty>=0.0.1a10",
+]
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv"]
+tests = ["B201", "B301"]
+skips = ["B101", "B601"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = [
+    "tests"
+]
+
+[tool.coverage.run]
+source=["src/allocation/*"]
+omit=["tests/*",".venv/*"]
