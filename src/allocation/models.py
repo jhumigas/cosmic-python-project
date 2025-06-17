@@ -1,40 +1,80 @@
 from dataclasses import dataclass
 from datetime import date
-from typing import Optional, Set
+from typing import List, Optional, Set
 
 
 @dataclass(frozen=True)
 class OrderLine:
+    # Note: We used the value object pattern here to ensure that the order line is immutable.
     orderid: str
     sku: str
     qty: int
 
 
+class OutOfStock(Exception):
+    pass
+
+
 class Batch:
+    # Note: We used the entity pattern here to ensure that the batch is mutable and since they have an identity.
     def __init__(
         self, reference: str, sku: str, quantity: int, eta: Optional[date] = None
     ):
         self.reference = reference
         self.sku = sku
-        self.quantity = quantity
-        self.eta = eta
-        self.allocations: Set[OrderLine] = set()
+        self.eta: Optional[date] = eta
+        self._purchased_quantity = quantity
+        self._allocations: Set[OrderLine] = set()
+
+    def __gt__(self, other: "Batch") -> bool:
+        if self.eta is None:
+            return False
+        if other.eta is None:
+            return True
+        return self.eta > other.eta
+
+    def __repr__(self) -> str:
+        return f"<Batch {self.reference}>"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Batch):
+            return False
+        return other.reference == self.reference
 
     @property
     def available_quantity(self) -> int:
-        return self.quantity - sum(line.qty for line in self.allocations)
+        return self._purchased_quantity - self.allocated_quantity
+
+    @property
+    def allocated_quantity(self) -> int:
+        return sum(line.qty for line in self._allocations)
 
     def allocate(self, line: OrderLine):
         if self.can_allocate(line):
-            self.quantity -= line.qty
+            self._allocations.add(line)
+        else:
+            raise OutOfStock(f"Out of stock for sku {line.sku}")
+
+    def deallocate(self, line: OrderLine):
+        if line in self._allocations:
+            self._allocations.remove(line)
 
     def can_allocate(self, line: OrderLine) -> bool:
         is_quantity_available: bool = self.available_quantity >= line.qty
         is_sku_valid: bool = self.sku == line.sku
-        if self.allocations is not None:
-            is_same_line_already_not_allocated = line not in self.allocations
+        if self._allocations is not None:
+            is_same_line_already_not_allocated = line not in self._allocations
         return (
             is_quantity_available
             and is_sku_valid
             and is_same_line_already_not_allocated
         )
+
+
+def allocate(line: OrderLine, batches: List[Batch]) -> str:
+    try:
+        batch = next(b for b in sorted(batches) if b.can_allocate(line))
+        batch.allocate(line)
+        return batch.reference
+    except StopIteration:
+        raise OutOfStock(f"Out of stock for sku {line.sku}")
