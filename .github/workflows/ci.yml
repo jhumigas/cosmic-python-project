@@ -1,0 +1,44 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+
+    - name: "Set up Python"
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: "pyproject.toml"
+
+    - name: Install the project
+      run: uv sync --locked --all-extras --dev
+
+    - name: Lint
+      run: make lint
+
+    - name: Check for vulnerabilities in dependencies
+      run: make check-safety
+
+    - name: Check for security vulnerabilities
+      run: make check-bandit
+
+    - name: Run tests
+      run: make test
