@@ -3,7 +3,7 @@ from datetime import date
 from typing import List, Optional, Set
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class OrderLine:
     # Note: We used the value object pattern here to ensure that the order line is immutable.
     orderid: str
@@ -52,8 +52,6 @@ class Batch:
     def allocate(self, line: OrderLine):
         if self.can_allocate(line):
             self._allocations.add(line)
-        else:
-            raise OutOfStock(f"Out of stock for sku {line.sku}")
 
     def deallocate(self, line: OrderLine):
         if line in self._allocations:

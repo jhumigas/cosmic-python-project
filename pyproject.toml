@@ -7,7 +7,9 @@ authors = [
     { name = "David M.", email = "mugi.dasha@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "sqlalchemy>=2.0.41",
+]
 
 [project.scripts]
 allocation = "allocation:main"
