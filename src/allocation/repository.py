@@ -2,18 +2,19 @@ import abc
 from allocation import model
 
 
+# Check how could use protocol here instead of abstract class
 class AbstractRepository(abc.ABC):
     @abc.abstractmethod
     def add(self, batch: model.Batch):
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def get(self, reference) -> model.Batch:
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def list(self) -> list[model.Batch]:
-        pass
+        raise NotImplementedError
 
 
 class FakeRepository(AbstractRepository):
