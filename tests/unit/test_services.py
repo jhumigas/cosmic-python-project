@@ -1,7 +1,7 @@
 import pytest
-from allocation import model
-from allocation import services
-from allocation.repository import FakeRepository
+from allocation.domain import model
+from allocation.service_layer import services
+from allocation.adapters.repository import FakeRepository
 
 
 class FakeSession:

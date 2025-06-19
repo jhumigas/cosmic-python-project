@@ -1,4 +1,4 @@
-from allocation.model import Batch, OrderLine
+from allocation.domain.model import Batch, OrderLine
 from datetime import date
 
 

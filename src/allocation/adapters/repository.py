@@ -1,5 +1,5 @@
 import abc
-from allocation import model
+from allocation.domain import model
 
 
 # Check how could use protocol here instead of abstract class

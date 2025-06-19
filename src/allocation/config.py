@@ -1,5 +1,7 @@
 import os
 
+# TODO: use pydantic environment variables to validate the environment variables
+
 
 def get_postgres_uri():
     host = os.environ.get("DB_HOST", "localhost")
