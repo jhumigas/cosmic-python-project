@@ -44,10 +44,23 @@ test:  ## run unit tests
 test-coverage: ## run unit tests with coverage and generate coverage xml and html report
 	uv run pytest tests -s --cov-append --doctest-modules --junitxml=$(OUTPUT_DIR)/junit/unit-tests-results.xml --cov=$(SRC_DIR) --cov-report=xml:$(OUTPUT_DIR)/coverage.xml --cov-report=html:$(OUTPUT_DIR)/htmlcov --cov-report term
 
-.PHONY: start-docker
-docker-up: ## start containers
-	docker compose --env-file .env up
+.PHONY: all
+all: docker-down docker-build docker-up test
 
-.PHONY: stop-docker
+.PHONY: docker-build
+docker-build: ## build containers
+	docker compose build
+
+.PHONY: docker-up
+docker-up: ## start containers
+	docker compose up -d app
+
+.PHONY: docker-down
 docker-down:  ## stop containers
 	docker compose down
+
+
+.PHONY: docker-logs
+docker-logs: ## show logs
+	docker compose logs app | tail -100
+

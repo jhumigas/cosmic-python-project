@@ -26,9 +26,10 @@ async def root():
 async def allocate(orderid: str, sku: str, qty: int):
     session = get_session()
     repo = repository.SqlAlchemyRepository(session)
-    line = model.OrderLine(orderid, sku, qty)
     try:
-        batchref = services.allocate(line, repo, session)
+        batchref = services.allocate(
+            orderid=orderid, sku=sku, qty=qty, repo=repo, session=session
+        )
     except (services.InvalidSku, model.OutOfStock) as e:
         return {"message": str(e)}, 400
     return {"batchref": batchref}, 201

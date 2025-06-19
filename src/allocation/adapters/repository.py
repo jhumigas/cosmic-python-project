@@ -21,6 +21,14 @@ class FakeRepository(AbstractRepository):
     def __init__(self, batches):
         self._batches = set(batches)
 
+    @staticmethod
+    def for_batch(ref, sku, qty, eta=None):
+        return FakeRepository(
+            [
+                model.Batch(ref, sku, qty, eta),
+            ]
+        )
+
     def add(self, batch):
         self._batches.add(batch)
 

@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Flask, request
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -27,7 +28,27 @@ def allocate_endpoint():
         request.json["qty"],
     )
     try:
-        batchref = services.allocate(line, repo, session)
+        batchref = services.allocate(
+            orderid=line.orderid, sku=line.sku, qty=line.qty, repo=repo, session=session
+        )
     except (services.InvalidSku, model.OutOfStock) as e:
         return {"message": str(e)}, 400
     return {"batchref": batchref}, 201
+
+
+@app.route("/add_batch", methods=["POST"])
+def add_batch():
+    session = get_session()
+    repo = repository.SqlAlchemyRepository(session)
+    eta = request.json["eta"]
+    if eta is not None:
+        eta = datetime.fromisoformat(eta).date()
+    services.add_batch(
+        request.json["ref"],
+        request.json["sku"],
+        request.json["qty"],
+        eta,
+        repo,
+        session,
+    )
+    return "OK", 201
