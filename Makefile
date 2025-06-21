@@ -37,8 +37,12 @@ lint: ## lint code
 	uvx ruff check .
 
 .PHONY: test
-test:  ## run unit tests
+test:  ## run all tests
 	uv run pytest tests
+
+.PHONY: unit-test
+unit-test:  ## run unit tests
+	uv run pytest tests/unit
 
 .PHONY: test-coverage
 test-coverage: ## run unit tests with coverage and generate coverage xml and html report

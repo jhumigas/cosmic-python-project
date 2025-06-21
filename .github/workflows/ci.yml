@@ -40,5 +40,5 @@ jobs:
     - name: Check for security vulnerabilities
       run: make check-bandit
 
-    - name: Run tests
-      run: make test
+    - name: Run unit tests
+      run: make unit-test
