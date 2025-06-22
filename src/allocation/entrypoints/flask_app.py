@@ -6,24 +6,6 @@ from allocation.service_layer import services, unit_of_work
 
 orm.start_mappers()
 app = Flask(__name__)
-uow = unit_of_work.SqlAlchemyUnitOfWork()
-
-
-@app.route("/allocate", methods=["POST"])
-def allocate_endpoint():
-    uow = unit_of_work.SqlAlchemyUnitOfWork()
-    line = model.OrderLine(
-        request.json["orderid"],
-        request.json["sku"],
-        request.json["qty"],
-    )
-    try:
-        batchref = services.allocate(
-            orderid=line.orderid, sku=line.sku, qty=line.qty, uow=uow
-        )
-    except (services.InvalidSku, model.OutOfStock) as e:
-        return {"message": str(e)}, 400
-    return {"batchref": batchref}, 201
 
 
 @app.route("/add_batch", methods=["POST"])
@@ -36,6 +18,21 @@ def add_batch():
         request.json["sku"],
         request.json["qty"],
         eta,
-        uow,
+        unit_of_work.SqlAlchemyUnitOfWork(),
     )
     return "OK", 201
+
+
+@app.route("/allocate", methods=["POST"])
+def allocate_endpoint():
+    try:
+        batchref = services.allocate(
+            request.json["orderid"],
+            request.json["sku"],
+            request.json["qty"],
+            unit_of_work.SqlAlchemyUnitOfWork(),
+        )
+    except (model.OutOfStock, services.InvalidSku) as e:
+        return {"message": str(e)}, 400
+
+    return {"batchref": batchref}, 201

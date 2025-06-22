@@ -1,52 +1,50 @@
-from datetime import date, timedelta
 import pytest
-from allocation.domain import model
+from allocation.adapters import repository
 from allocation.service_layer import services, unit_of_work
-from allocation.adapters.repository import FakeRepository
 
 
-today = date.today()
-tomorrow = today + timedelta(days=1)
-later = tomorrow + timedelta(days=10)
+class FakeRepository(repository.AbstractRepository):
+    def __init__(self, products):
+        self._products = set(products)
+
+    def add(self, product):
+        self._products.add(product)
+
+    def get(self, sku):
+        return next((p for p in self._products if p.sku == sku), None)
 
 
 class FakeUnitOfWork(unit_of_work.AbstractUnitOfWork):
     def __init__(self):
-        self.batches = FakeRepository([])  # (1)
-        self.committed = False  # (2)
+        self.products = FakeRepository([])
+        self.committed = False
 
     def commit(self):
-        self.committed = True  # (2)
+        self.committed = True
 
     def rollback(self):
         pass
 
 
-# domain-layer test:
-def test_prefers_current_stock_batches_to_shipments():
-    in_stock_batch = model.Batch("in-stock-batch", "RETRO-CLOCK", 100, eta=None)
-    shipment_batch = model.Batch("shipment-batch", "RETRO-CLOCK", 100, eta=tomorrow)
-    line = model.OrderLine("oref", "RETRO-CLOCK", 10)
-
-    model.allocate(line, [in_stock_batch, shipment_batch])
-
-    assert in_stock_batch.available_quantity == 90
-    assert shipment_batch.available_quantity == 100
-
-
-def test_prefers_warehouse_batches_to_shipments():
-    # in_stock_batch = model.Batch("in-stock-batch", "RETRO-CLOCK", 100, eta=None)
-    # shipment_batch = model.Batch("shipment-batch", "RETRO-CLOCK", 100, eta=tomorrow)
+def test_add_batch_for_new_product():
     uow = FakeUnitOfWork()
-    services.add_batch("in-stock-batch", "RETRO-CLOCK", 100, None, uow)
-    services.add_batch("shipment-batch", "RETRO-CLOCK", 100, tomorrow, uow)
-    in_stock_batch = uow.batches.get("in-stock-batch")
-    shipment_batch = uow.batches.get("shipment-batch")
+    services.add_batch("b1", "CRUNCHY-ARMCHAIR", 100, None, uow)
+    assert uow.products.get("CRUNCHY-ARMCHAIR") is not None
+    assert uow.committed
 
-    services.allocate(orderid="oref", sku="RETRO-CLOCK", qty=10, uow=uow)
 
-    assert in_stock_batch.available_quantity == 90
-    assert shipment_batch.available_quantity == 100
+def test_add_batch_for_existing_product():
+    uow = FakeUnitOfWork()
+    services.add_batch("b1", "GARISH-RUG", 100, None, uow)
+    services.add_batch("b2", "GARISH-RUG", 99, None, uow)
+    assert "b2" in [b.reference for b in uow.products.get("GARISH-RUG").batches]
+
+
+def test_allocate_returns_allocation():
+    uow = FakeUnitOfWork()
+    services.add_batch("batch1", "COMPLICATED-LAMP", 100, None, uow)
+    result = services.allocate("o1", "COMPLICATED-LAMP", 10, uow)
+    assert result == "batch1"
 
 
 def test_allocate_errors_for_invalid_sku():
@@ -57,24 +55,8 @@ def test_allocate_errors_for_invalid_sku():
         services.allocate("o1", "NONEXISTENTSKU", 10, uow)
 
 
-def test_commits():
-    batch = model.Batch("b1", "OMINOUS-MIRROR", 100, eta=None)
+def test_allocate_commits():
     uow = FakeUnitOfWork()
-    uow.batches.add(batch)
-
-    services.allocate(orderid="o1", sku="OMINOUS-MIRROR", qty=10, uow=uow)
-    assert uow.committed is True
-
-
-def test_add_batch():
-    uow = FakeUnitOfWork()  # (3)
-    services.add_batch("b1", "CRUNCHY-ARMCHAIR", 100, None, uow)  # (3)
-    assert uow.batches.get("b1") is not None
+    services.add_batch("b1", "OMINOUS-MIRROR", 100, None, uow)
+    services.allocate("o1", "OMINOUS-MIRROR", 10, uow)
     assert uow.committed
-
-
-def test_allocate_returns_allocation():
-    uow = FakeUnitOfWork()  # (3)
-    services.add_batch("batch1", "COMPLICATED-LAMP", 100, None, uow)  # (3)
-    result = services.allocate("o1", "COMPLICATED-LAMP", 10, uow)  # (3)
-    assert result == "batch1"

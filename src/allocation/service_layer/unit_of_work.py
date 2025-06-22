@@ -6,10 +6,10 @@ import abc
 
 
 class AbstractUnitOfWork(abc.ABC):
-    batches: repository.AbstractRepository  # (1)
+    products: repository.AbstractRepository  # (1)
 
     def __enter__(self, *args):
-        return
+        return self
 
     def __exit__(self, *args):  # (2)
         self.rollback()  # (4)
@@ -23,20 +23,21 @@ class AbstractUnitOfWork(abc.ABC):
         raise NotImplementedError
 
 
-DEFAULT_SESSION_FACTORY = sessionmaker(  # (1)
+DEFAULT_SESSION_FACTORY = sessionmaker(
     bind=create_engine(
         config.get_postgres_uri(),
+        isolation_level="REPEATABLE READ",
     )
 )
 
 
 class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
     def __init__(self, session_factory=DEFAULT_SESSION_FACTORY):
-        self.session_factory = session_factory  # (1)
+        self.session_factory = session_factory
 
     def __enter__(self):
-        self.session = self.session_factory()  # type: Session  #(2)
-        self.batches = repository.SqlAlchemyRepository(self.session)  # (2)
+        self.session = self.session_factory()
+        self.products = repository.SqlAlchemyRepository(self.session)
         return super().__enter__()
 
     def __exit__(self, *args):
