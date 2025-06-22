@@ -1,27 +1,17 @@
 from datetime import datetime
 from flask import Flask, request
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-from allocation import config
 from allocation.domain import model
 from allocation.adapters import orm
-from allocation.adapters import repository
-from allocation.service_layer import services
+from allocation.service_layer import services, unit_of_work
 
 orm.start_mappers()
-get_session = sessionmaker(bind=create_engine(config.get_postgres_uri()))
 app = Flask(__name__)
-
-
-def is_valid_sku(sku, batches):
-    return sku in {b.sku for b in batches}
+uow = unit_of_work.SqlAlchemyUnitOfWork()
 
 
 @app.route("/allocate", methods=["POST"])
 def allocate_endpoint():
-    session = get_session()
-    repo = repository.SqlAlchemyRepository(session)
+    uow = unit_of_work.SqlAlchemyUnitOfWork()
     line = model.OrderLine(
         request.json["orderid"],
         request.json["sku"],
@@ -29,7 +19,7 @@ def allocate_endpoint():
     )
     try:
         batchref = services.allocate(
-            orderid=line.orderid, sku=line.sku, qty=line.qty, repo=repo, session=session
+            orderid=line.orderid, sku=line.sku, qty=line.qty, uow=uow
         )
     except (services.InvalidSku, model.OutOfStock) as e:
         return {"message": str(e)}, 400
@@ -38,8 +28,6 @@ def allocate_endpoint():
 
 @app.route("/add_batch", methods=["POST"])
 def add_batch():
-    session = get_session()
-    repo = repository.SqlAlchemyRepository(session)
     eta = request.json["eta"]
     if eta is not None:
         eta = datetime.fromisoformat(eta).date()
@@ -48,7 +36,6 @@ def add_batch():
         request.json["sku"],
         request.json["qty"],
         eta,
-        repo,
-        session,
+        uow,
     )
     return "OK", 201

@@ -1,15 +1,10 @@
 from fastapi import FastAPI
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
-from allocation import config
 from allocation.domain import model
 from allocation.adapters import orm
-from allocation.adapters import repository
 from allocation.service_layer import services
+from allocation.service_layer import unit_of_work
 
 orm.start_mappers()
-get_session = sessionmaker(bind=create_engine(config.get_postgres_uri()))
 app = FastAPI()
 
 
@@ -24,11 +19,9 @@ async def root():
 
 @app.post("/allocate")
 async def allocate(orderid: str, sku: str, qty: int):
-    session = get_session()
-    repo = repository.SqlAlchemyRepository(session)
     try:
         batchref = services.allocate(
-            orderid=orderid, sku=sku, qty=qty, repo=repo, session=session
+            orderid=orderid, sku=sku, qty=qty, uow=unit_of_work.SqlAlchemyUnitOfWork()
         )
     except (services.InvalidSku, model.OutOfStock) as e:
         return {"message": str(e)}, 400
