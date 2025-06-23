@@ -3,17 +3,19 @@ from datetime import date
 from typing import Optional
 
 
-class Event:
+class Command:
     pass
 
 
 @dataclass
-class OutOfStock(Event):
+class Allocate(Command):  # (1)
+    orderid: str
     sku: str
+    qty: int
 
 
 @dataclass
-class BatchCreated(Event):
+class CreateBatch(Command):  # (2)
     ref: str
     sku: str
     qty: int
@@ -21,13 +23,6 @@ class BatchCreated(Event):
 
 
 @dataclass
-class BatchQuantityChanged(Event):
+class ChangeBatchQuantity(Command):  # (3)
     ref: str
-    qty: int
-
-
-@dataclass
-class AllocationRequired(Event):
-    orderid: str
-    sku: str
     qty: int

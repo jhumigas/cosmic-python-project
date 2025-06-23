@@ -4,8 +4,6 @@ from allocation.adapters import repository
 from allocation import config
 import abc
 
-from allocation.service_layer import messagebus
-
 
 class AbstractUnitOfWork(abc.ABC):
     products: repository.AbstractRepository  # (1)
@@ -16,15 +14,13 @@ class AbstractUnitOfWork(abc.ABC):
     def __exit__(self, *args):  # (2)
         self.rollback()  # (4)
 
-    def publish_events(self):
+    def collect_new_events(self):
         for product in self.products.seen:
             while product.events:
-                event = product.events.pop(0)
-                messagebus.handle(event)
+                yield product.events.pop(0)
 
     def commit(self):  # (3)
         self._commit()
-        self.publish_events()
 
     @abc.abstractmethod
     def _commit(self):

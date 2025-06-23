@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import List, Optional, Set
 
-from allocation.domain import events
+from allocation.domain import commands, events
 
 
 @dataclass(unsafe_hash=True)
@@ -62,6 +62,9 @@ class Batch:
         if line in self._allocations:
             self._allocations.remove(line)
 
+    def deallocate_one(self) -> OrderLine:
+        return self._allocations.pop()
+
     def can_allocate(self, line: OrderLine) -> bool:
         is_quantity_available: bool = self.available_quantity >= line.qty
         is_sku_valid: bool = self.sku == line.sku
@@ -81,12 +84,19 @@ class Product:
         self.version_number = version_number
         self.events: List[events.Event] = []
 
-    def allocate(self, line: OrderLine) -> str:
+    def allocate(self, line: OrderLine) -> Optional[str]:
         try:
             batch = next(b for b in sorted(self.batches) if b.can_allocate(line))
             batch.allocate(line)
             self.version_number += 1
             return batch.reference
         except StopIteration:
-            # raise OutOfStock(f"Out of stock for sku {line.sku}")
             self.events.append(events.OutOfStock(sku=line.sku))
+            return None
+
+    def change_batch_quantity(self, ref: str, qty: int):
+        batch = next(b for b in self.batches if b.reference == ref)
+        batch._purchased_quantity = qty
+        while batch.available_quantity < 0:
+            line = batch.deallocate_one()
+            self.events.append(commands.Allocate(line.orderid, line.sku, line.qty))
