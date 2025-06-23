@@ -57,7 +57,7 @@ docker-build: ## build containers
 
 .PHONY: docker-up
 docker-up: ## start containers
-	docker compose up -d app
+	docker compose up -d
 
 .PHONY: docker-down
 docker-down:  ## stop containers

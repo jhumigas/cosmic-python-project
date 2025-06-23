@@ -3,6 +3,7 @@ from datetime import date
 from typing import Optional
 
 
+@dataclass
 class Event:
     pass
 
@@ -31,3 +32,11 @@ class AllocationRequired(Event):
     orderid: str
     sku: str
     qty: int
+
+
+@dataclass
+class Allocated(Event):
+    orderid: str
+    sku: str
+    qty: int
+    batchref: str
