@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import date
-from typing import List, Optional, Set
+from typing import List, Optional, Set, Union
 
 from allocation.domain import commands, events
 
@@ -82,7 +82,7 @@ class Product:
         self.sku = sku
         self.batches = batches
         self.version_number = version_number
-        self.events: List[events.Event] = []
+        self.events: List[Union[events.Event, commands.Command]] = []
 
     def allocate(self, line: OrderLine) -> Optional[str]:
         try:
