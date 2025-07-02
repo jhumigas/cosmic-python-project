@@ -2,12 +2,11 @@ from datetime import date
 from typing import Optional
 from fastapi import FastAPI
 from allocation.domain import commands, model
-from allocation.adapters import orm
-from allocation.service_layer import handlers, messagebus
-from allocation.service_layer import unit_of_work
+from allocation.service_layer import handlers
+from allocation import bootstrap
 
-orm.start_mappers()
 app = FastAPI()
+bus = bootstrap.bootstrap()
 
 
 def is_valid_sku(sku, batches):
@@ -28,9 +27,8 @@ def add_batch(ref: str, sku: str, qty: int, eta: Optional[date]):
         eta,
     )
 
-    messagebus.handle(
+    bus.handle(
         event,
-        unit_of_work.SqlAlchemyUnitOfWork(),
     )
     return "OK", 201
 
@@ -44,9 +42,8 @@ def allocate_endpoint(orderid: str, sku: str, qty: int):
             qty,
         )
 
-        results = messagebus.handle(
+        results = bus.handle(
             event,
-            unit_of_work.SqlAlchemyUnitOfWork(),
         )
         batchref = results.pop(0)
     except (model.OutOfStock, handlers.InvalidSku) as e:

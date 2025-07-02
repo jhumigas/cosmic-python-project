@@ -19,13 +19,11 @@ class OutOfStock(Exception):
 
 class Batch:
     # Note: We used the entity pattern here to ensure that the batch is mutable and since they have an identity.
-    def __init__(
-        self, reference: str, sku: str, quantity: int, eta: Optional[date] = None
-    ):
-        self.reference = reference
+    def __init__(self, ref: str, sku: str, qty: int, eta: Optional[date] = None):
+        self.reference = ref
         self.sku = sku
         self.eta: Optional[date] = eta
-        self._purchased_quantity = quantity
+        self._purchased_quantity = qty
         self._allocations: Set[OrderLine] = set()
 
     def __gt__(self, other: "Batch") -> bool:

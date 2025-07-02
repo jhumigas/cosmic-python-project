@@ -1,8 +1,6 @@
-from dataclasses import asdict
-from typing import Optional
-from allocation.adapters import email
+from typing import Callable, Optional
+from allocation.adapters import notifications
 from allocation.domain import commands, events, model
-from allocation.adapters import redis_eventpublisher
 from allocation.service_layer import unit_of_work
 from sqlalchemy import text
 
@@ -48,15 +46,17 @@ def reallocate(
 ):
     with uow:
         product = uow.products.get(sku=event.sku)
-        product.events.append(commands.Allocate(**asdict(event)))
+        product.events.append(
+            commands.Allocate(orderid=event.orderid, sku=event.sku, qty=event.qty)
+        )
         uow.commit()
 
 
 def send_out_of_stock_notification(
     event: events.OutOfStock,
-    uow: unit_of_work.AbstractUnitOfWork,
+    notifications: notifications.AbstractNotifications,
 ):
-    email.send(
+    notifications.send(
         "stock@made.com",
         f"Out of stock for {event.sku}",
     )
@@ -74,36 +74,39 @@ def change_batch_quantity(
 
 def publish_allocated_event(
     event: events.Allocated,
-    uow: unit_of_work.AbstractUnitOfWork,
+    publish: Callable,
 ):
-    redis_eventpublisher.publish("line_allocated", event)
+    publish("line_allocated", event)
 
 
 def add_allocation_to_read_model(
     event: events.Allocated,
-    uow: unit_of_work.SqlAlchemyUnitOfWork,
+    uow: unit_of_work.AbstractUnitOfWork,
 ):
     with uow:
-        uow.session.execute(
-            text("""
-            INSERT INTO allocations_view (orderid, sku, batchref)
-            VALUES (:orderid, :sku, :batchref)
-            """),
-            dict(orderid=event.orderid, sku=event.sku, batchref=event.batchref),
-        )
-        uow.commit()
+        if isinstance(uow, unit_of_work.SqlAlchemyUnitOfWork):
+            uow.session.execute(
+                text("""
+                INSERT INTO allocations_view (orderid, sku, batchref)
+                VALUES (:orderid, :sku, :batchref)
+                """),
+                dict(orderid=event.orderid, sku=event.sku, batchref=event.batchref),
+            )
+            uow.commit()
 
 
 def remove_allocation_from_read_model(
     event: events.Deallocated,
-    uow: unit_of_work.SqlAlchemyUnitOfWork,
+    uow: unit_of_work.AbstractUnitOfWork,
 ):
     with uow:
-        uow.session.execute(
-            text("""
-            DELETE FROM allocations_view
-            WHERE orderid = :orderid AND sku = :sku
-            """),
-            dict(orderid=event.orderid, sku=event.sku),
-        )
-        uow.commit()
+        # Find a better way to do this
+        if isinstance(uow, unit_of_work.SqlAlchemyUnitOfWork):
+            uow.session.execute(
+                text("""
+                DELETE FROM allocations_view
+                WHERE orderid = :orderid AND sku = :sku
+                """),
+                dict(orderid=event.orderid, sku=event.sku),
+            )
+            uow.commit()
