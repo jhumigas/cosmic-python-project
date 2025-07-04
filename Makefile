@@ -63,10 +63,6 @@ docker-up: ## start containers
 docker-down:  ## stop containers
 	docker compose down
 
-.PHONY: start-dev-deps
-start-dev-deps:
-	docker compose up -d postgres redis
-
 .PHONY: docker-logs
 docker-logs: ## show logs
 	docker compose logs app | tail -100
@@ -75,9 +71,16 @@ docker-logs: ## show logs
 start-dev-flask-app: ## start dev mode
 	FLASK_APP=src/allocation/entrypoints/flask_app.py flask run --host=0.0.0.0 --port=80
 
+.PHONY: start-dev
+start-dev: all start-dev-fast-app
+
 .PHONY: start-dev-fast-app
 start-dev-fast-app: ## start dev mode
 	uv run fastapi dev src/allocation/entrypoints/fast_app.py
+
+.PHONY: stop-dev
+stop-dev:
+	docker compose down
 
 .PHONY: start-dev-redis-eventconsumer
 start-dev-redis-eventconsumer: ## start dev mode

@@ -8,20 +8,19 @@ We start from a simple e-commerce use case:  the business decides to implement a
 For that purpose: we start with a simple architecture with:
 
 * domain model: contain the core model of our domain (with just order line and batches), here we define value objects and entities to structure the concepts we work with
-* repository: this layer is the layer enabling interaction with a storage, we also implement an ORM
+* repository: this layer enables interaction with a storage, we also implement an ORM
 * service layer: this is the part that orchestrates the steps when we have to perform an operation like allocate
 
 Then to have the most consistent interactions with our database, we introduce
 
 * unit of work: this help have an abstraction over atomic operations
-* aggregates: evolution of our models so that we can have concurrent operation given a granularity (here products)
+* aggregates: evolution of our models so that we can have concurrent operation given a cluster of associated objects
 
 We then evolve our application so that it becomes a message processor, easier to integrate in an architecture with microservices, we introduce
 
 * Events: Broadcast by an actor to all interested listeners. Events capture facts
 * Commands: ​Instructions sent by one part of a system to another. Commands capture intent
 * Command-Query Responsability Segregation : Basically, we start from the insight that most users are not going to buy, but just see the product. In our application we need to separation read and write queries so we introduce a modul views only use to read our product
-
 
 ## Pre-requisities
 
@@ -31,6 +30,22 @@ Make sure you have:
 * [Docker](https://www.docker.com/get-started/) or a docker container manager (use [colima](https://github.com/abiosoft/colima#installation) for macOs)
 
 ## Setup local env
+
+```sh
+make start-dev
+```
+
+This will spin up dev environment in docker, and run locally a fast api, that connects to docker.
+We run the `make all` command prior to start the FastAPI in development mode to have some test data to work with.
+Head to `http://127.0.0.1:8000/docs` for the swagger documentation, and perform some tests.
+
+You can stop the dev env with
+
+```sh
+make stop-dev
+```
+
+## Run tests
 
 To run all tests, you can use:
 

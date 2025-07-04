@@ -2,7 +2,6 @@ from typing import Callable, Optional
 from allocation.adapters import notifications
 from allocation.domain import commands, events, model
 from allocation.service_layer import unit_of_work
-from sqlalchemy import text
 
 
 class InvalidSku(Exception):
@@ -84,15 +83,14 @@ def add_allocation_to_read_model(
     uow: unit_of_work.AbstractUnitOfWork,
 ):
     with uow:
-        if isinstance(uow, unit_of_work.SqlAlchemyUnitOfWork):
-            uow.session.execute(
-                text("""
+        uow.execute(
+            """
                 INSERT INTO allocations_view (orderid, sku, batchref)
                 VALUES (:orderid, :sku, :batchref)
-                """),
-                dict(orderid=event.orderid, sku=event.sku, batchref=event.batchref),
-            )
-            uow.commit()
+                """,
+            dict(orderid=event.orderid, sku=event.sku, batchref=event.batchref),
+        )
+        uow.commit()
 
 
 def remove_allocation_from_read_model(
@@ -100,13 +98,11 @@ def remove_allocation_from_read_model(
     uow: unit_of_work.AbstractUnitOfWork,
 ):
     with uow:
-        # Find a better way to do this
-        if isinstance(uow, unit_of_work.SqlAlchemyUnitOfWork):
-            uow.session.execute(
-                text("""
+        uow.execute(
+            """
                 DELETE FROM allocations_view
                 WHERE orderid = :orderid AND sku = :sku
-                """),
-                dict(orderid=event.orderid, sku=event.sku),
-            )
-            uow.commit()
+                """,
+            dict(orderid=event.orderid, sku=event.sku),
+        )
+        uow.commit()

@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from allocation.adapters import repository
 from allocation import config
@@ -30,6 +30,10 @@ class AbstractUnitOfWork(abc.ABC):
     def rollback(self):  # (4)
         raise NotImplementedError
 
+    @abc.abstractmethod
+    def execute(self, sql: str, params: dict):
+        raise NotImplementedError
+
 
 DEFAULT_SESSION_FACTORY = sessionmaker(
     bind=create_engine(
@@ -57,3 +61,6 @@ class SqlAlchemyUnitOfWork(AbstractUnitOfWork):
 
     def rollback(self):  # (4)
         self.session.rollback()
+
+    def execute(self, sql: str, params: dict):
+        return self.session.execute(text(sql), params)

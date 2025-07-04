@@ -39,6 +39,9 @@ class FakeUnitOfWork(unit_of_work.AbstractUnitOfWork):
     def rollback(self):
         pass
 
+    def execute(self, sql: str, params: dict):
+        pass
+
 
 class FakeNotifications(notifications.AbstractNotifications):
     def __init__(self):
