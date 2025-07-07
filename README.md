@@ -26,8 +26,9 @@ We then evolve our application so that it becomes a message processor, easier to
 
 Make sure you have:
 
-* uv: Python package and project manager ([instructions](https://docs.astral.sh/uv/getting-started/installation/))
+* [uv](https://docs.astral.sh/uv/): Python package and project manager ([instructions](https://docs.astral.sh/uv/getting-started/installation/))
 * [Docker](https://www.docker.com/get-started/) or a docker container manager (use [colima](https://github.com/abiosoft/colima#installation) for macOs)
+* [dbeaver](https://dbeaver.io/) optional database tool to manage your database
 
 ## Setup local env
 
@@ -36,7 +37,6 @@ make start-dev
 ```
 
 This will spin up dev environment in docker, and run locally a fast api, that connects to docker.
-We run the `make all` command prior to start the FastAPI in development mode to have some test data to work with.
 Head to `http://127.0.0.1:8000/docs` for the swagger documentation, and perform some tests.
 
 You can stop the dev env with
@@ -50,7 +50,7 @@ make stop-dev
 To run all tests, you can use:
 
 ```sh
-make all
+make tests
 ```
 
 ## Architecture

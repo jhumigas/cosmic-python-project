@@ -36,20 +36,25 @@ format: ## format code
 lint: ## lint code
 	uvx ruff check .
 
-.PHONY: test
-test:  ## run all tests
-	uv run pytest tests
-
 .PHONY: unit-test
 unit-test:  ## run unit tests
 	uv run pytest tests/unit
+
+.PHONY: integration-test
+integration-test:  ## run integration tests
+	uv run pytest tests/integration
+
+.PHONY: e2e-test
+e2e-test:  ## run end-to-end tests
+	uv run pytest tests/e2e
 
 .PHONY: test-coverage
 test-coverage: ## run unit tests with coverage and generate coverage xml and html report
 	uv run pytest tests -s --cov-append --doctest-modules --junitxml=$(OUTPUT_DIR)/junit/unit-tests-results.xml --cov=$(SRC_DIR) --cov-report=xml:$(OUTPUT_DIR)/coverage.xml --cov-report=html:$(OUTPUT_DIR)/htmlcov --cov-report term
 
-.PHONY: all
-all: docker-down docker-build docker-up test
+.PHONY: tests
+tests: docker-down docker-build docker-up
+	uv run pytest tests
 
 .PHONY: docker-build
 docker-build: ## build containers
@@ -71,12 +76,13 @@ docker-logs: ## show logs
 start-dev-flask-app: ## start dev mode
 	FLASK_APP=src/allocation/entrypoints/flask_app.py flask run --host=0.0.0.0 --port=80
 
-.PHONY: start-dev
-start-dev: all start-dev-fast-app
-
 .PHONY: start-dev-fast-app
 start-dev-fast-app: ## start dev mode
 	uv run fastapi dev src/allocation/entrypoints/fast_app.py
+
+.PHONY: start-dev
+start-dev: docker-up start-dev-fast-app
+
 
 .PHONY: stop-dev
 stop-dev:

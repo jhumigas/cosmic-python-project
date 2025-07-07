@@ -40,5 +40,27 @@ jobs:
     - name: Check for security vulnerabilities
       run: make check-bandit
 
-    - name: Run unit tests
-      run: make unit-test
+  test:
+    runs-on: ubuntu-latest
+    env:
+      COMPOSE_FILE: docker-compose.yml
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+
+    - name: "Set up Python"
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: "pyproject.toml"
+
+    - name: Install the project
+      run: uv sync --locked --all-extras --dev
+
+    - name: Run tests
+      run: make tests
+
+
