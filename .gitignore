@@ -194,3 +194,6 @@ notebooks/model/**
 
 ## Custom
 tmp
+
+## Docker data
+.docker

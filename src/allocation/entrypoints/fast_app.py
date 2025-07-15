@@ -43,14 +43,13 @@ def allocate_endpoint(orderid: str, sku: str, qty: int):
             qty,
         )
 
-        results = bus.handle(
+        bus.handle(
             event,
         )
-        batchref = results.pop(0)
     except (model.OutOfStock, handlers.InvalidSku) as e:
         return {"message": str(e)}, 400
 
-    return {"batchref": batchref}, 201
+    return "OK", 202
 
 
 @app.get("/allocations/{orderid}")

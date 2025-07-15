@@ -4,6 +4,7 @@ import redis
 
 from allocation import bootstrap, config
 from allocation.domain import commands
+from allocation.service_layer.messagebus import MessageBus
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ def main():
         handle_change_batch_quantity(m, bus)
 
 
-def handle_change_batch_quantity(m, bus):
+def handle_change_batch_quantity(m, bus: MessageBus):
     logger.info("handling %s", m)
     data = json.loads(m["data"])
     cmd = commands.ChangeBatchQuantity(ref=data["batchref"], qty=data["qty"])
