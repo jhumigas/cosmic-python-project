@@ -1,34 +1,34 @@
 # Architecture Patterns with Python
 
 This repository is a showcase of architectural patterns widely used in industrial projects.
-We start from a simple e-commerce use case:  the business decides to implement an exciting new way of allocating stock, instead of just considering good available in the warehouse, we will treat the goods on ships as real stock and part of our inventory, just with slightly longer lead times. Fewer goods will appear to be out of stock, we’ll sell more, and the business can save money by keeping lower inventory in the domestic warehouse.
+We start from a simple e-commerce use case: the business decides to implement an exciting new way of allocating stock. Instead of just considering goods available in the warehouse, we will treat the goods on ships as real stock and part of our inventory, just with slightly longer lead times. Fewer goods will appear to be out of stock, we’ll sell more, and the business can save money by keeping lower inventory in the domestic warehouse.
 
 ## Introduction
 
-For that purpose: we start with a simple architecture with:
+For that purpose, we start with a simple architecture with:
 
-* domain model: contain the core model of our domain (with just order line and batches), here we define value objects and entities to structure the concepts we work with
-* repository: this layer enables interaction with a storage, we also implement an ORM
-* service layer: this is the part that orchestrates the steps when we have to perform an operation like allocate
+- **domain model**: Contains the core model of our domain (with just order lines and batches). Here we define value objects and entities to structure the concepts we work with
+- **repository**: This layer enables interaction with storage. We also implement an ORM
+- **service layer**: This is the part that orchestrates the steps when we have to perform an operation like allocation
 
-Then to have the most consistent interactions with our database, we introduce
+Then to have the most consistent interactions with our database, we introduce:
 
-* unit of work: this help have an abstraction over atomic operations
-* aggregates: evolution of our models so that we can have concurrent operation given a cluster of associated objects
+- **unit of work**: This helps provide an abstraction over atomic operations
+- **aggregates**: Evolution of our models so that we can have concurrent operations given a cluster of associated objects
 
-We then evolve our application so that it becomes a message processor, easier to integrate in an architecture with microservices, we introduce
+We then evolve our application so that it becomes a message processor, easier to integrate in an architecture with microservices. We introduce:
 
-* Events: Broadcast by an actor to all interested listeners. Events capture facts
-* Commands: ​Instructions sent by one part of a system to another. Commands capture intent
-* Command-Query Responsability Segregation : Basically, we start from the insight that most users are not going to buy, but just see the product. In our application we need to separation read and write queries so we introduce a modul views only use to read our product
+- **Events**: Broadcast by an actor to all interested listeners. Events capture facts
+- **Commands**: Instructions sent by one part of a system to another. Commands capture intent
+- **Command-Query Responsibility Segregation**: Basically, we start from the insight that most users are not going to buy, but just browse the product. In our application we need to separate read and write queries, so we introduce a module for views only used to read our products
 
-## Pre-requisities
+## Prerequisites
 
 Make sure you have:
 
-* [uv](https://docs.astral.sh/uv/): Python package and project manager ([instructions](https://docs.astral.sh/uv/getting-started/installation/))
-* [Docker](https://www.docker.com/get-started/) or a docker container manager (use [colima](https://github.com/abiosoft/colima#installation) for macOs)
-* [dbeaver](https://dbeaver.io/) optional database tool to manage your database
+- [uv](https://docs.astral.sh/uv/): Python package and project manager ([instructions](https://docs.astral.sh/uv/getting-started/installation/))
+- [Docker](https://www.docker.com/get-started/) or a docker container manager (use [colima](https://github.com/abiosoft/colima#installation) for macOS)
+- [dbeaver](https://dbeaver.io/) optional database tool to manage your database
 
 ## Setup local env
 
@@ -36,10 +36,10 @@ Make sure you have:
 make start-dev
 ```
 
-This will spin up dev environment in docker, and run locally a fast api, that connects to docker.
+This will spin up the dev environment in docker, and run a FastAPI locally that connects to docker.
 Head to `http://127.0.0.1:8000/docs` for the swagger documentation, and perform some tests.
 
-You can stop the dev env with
+You can stop the dev env with:
 
 ```sh
 make stop-dev
@@ -64,7 +64,7 @@ make tests
 ├── docker-compose.yml
 ├── Dockerfile
 ├── Makefile       <-- Commands to build, test and run locally the project
-├── pyproject.toml <--  Build onfiguration file used for build and packaging tools
+├── pyproject.toml <-- Build configuration file used for build and packaging tools
 ├── README.md
 ├── src
 │   └── allocation
@@ -74,21 +74,21 @@ make tests
 │       │   └── redis_eventconsumer.py  <-- Entrypoint to run an event consumer
 │       ├── service_layer               <-- Orchestration layer
 │       │   ├── __init__.py
-│       │   ├── handlers.py             <-- Set of handlers to process command and events
-│       │   ├── messagebus.py           <-- Orchestrator class that process events, and commands then handle persistence
-│       │   └── unit_of_work.py         <-- Manage context over atomic operation to the database
+│       │   ├── handlers.py             <-- Set of handlers to process commands and events
+│       │   ├── messagebus.py           <-- Orchestrator class that processes events and commands then handles persistence
+│       │   └── unit_of_work.py         <-- Manage context over atomic operations to the database
 │       ├── adapters
 │       │   ├── __init__.py
-│       │   ├── email.py                <-- Email module to send emil when needed
-│       │   ├── notifications.py        <-- Notification interface and classes used to produce notification when needed
-│       │   ├── orm.py                  <-- Actual definition of database table and mappings to our objects
+│       │   ├── email.py                <-- Email module to send email when needed
+│       │   ├── notifications.py        <-- Notification interface and classes used to produce notifications when needed
+│       │   ├── orm.py                  <-- Actual definition of database tables and mappings to our objects
 │       │   ├── redis_eventpublisher.py <-- Simple publisher to redis
 │       │   └── repository.py           <-- Actual layer to handle persistence
 │       ├── domain
 │       │   ├── __init__.py
-│       │   ├── commands.py             <-- Command definition
-│       │   ├── events.py               <-- Event definition
-│       │   └── model.py                <-- Model definition
+│       │   ├── commands.py             <-- Command definitions
+│       │   ├── events.py               <-- Event definitions
+│       │   └── model.py                <-- Model definitions
 │       ├── bootstrap.py                <-- Dependencies initialization and bootstrapping
 │       ├── config.py
 │       └── logger.py
@@ -100,4 +100,3 @@ make tests
 │   └── unit
 └── uv.lock
 ```
-
