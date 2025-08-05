@@ -4,6 +4,7 @@ import subprocess
 import time
 from pathlib import Path
 
+import pulsar
 import pytest
 import redis
 import requests
@@ -111,5 +112,24 @@ def restart_redis_pubsub():
         return
     subprocess.run(
         ["docker-compose", "restart", "-t", "0", "redis_pubsub"],
+        check=True,
+    )
+
+
+@retry(stop=stop_after_delay(10))
+def wait_for_pulsar_to_come_up():
+    pulsar_client = pulsar.Client(config.get_pulsar_uri(), operation_timeout_seconds=30)
+    pulsar_client.close()
+    return True
+
+
+@pytest.fixture
+def restart_pulsar_pubsub():
+    wait_for_pulsar_to_come_up()
+    if not shutil.which("docker-compose"):
+        print("skipping restart, assumes running in container")
+        return
+    subprocess.run(
+        ["docker-compose", "restart", "-t", "0", "pulsar_pubsub"],
         check=True,
     )

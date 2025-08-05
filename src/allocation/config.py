@@ -13,7 +13,7 @@ def get_postgres_uri():
 
 def get_api_url():
     host = os.environ.get("API_HOST", "localhost")
-    port = 5005 if host == "localhost" else 80
+    port = 8000 if host == "localhost" else 5005
     return f"http://{host}:{port}"
 
 
@@ -25,8 +25,9 @@ def get_redis_host_and_port():
 
 def get_pulsar_uri():
     host = os.environ.get("PULSAR_HOST", "localhost")
-    port = 6650 if host == "localhost" else 6650
+    port = 6651 if host == "localhost" else 6652
     return f"pulsar://{host}:{port}"
+    # return "pulsar://broker:6651"
 
 
 def get_email_host_and_port():

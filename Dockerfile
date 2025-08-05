@@ -24,7 +24,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
-ENV FLASK_APP=src/allocation/entrypoints/flask_app.py FLASK_DEBUG=1 PYTHONUNBUFFERED=1
 
 # Reset the entrypoint, don't invoke `uv`
 ENTRYPOINT []
@@ -32,4 +31,4 @@ ENTRYPOINT []
 # Run the FastAPI application by default
 # Uses `fastapi dev` to enable hot-reloading when the `watch` sync occurs
 # Uses `--host 0.0.0.0` to allow access from outside the container
-# CMD ["fastapi", "dev", "--host", "0.0.0.0", "src/uv_docker_example"]
+CMD ["fastapi", "dev", "--host", "0.0.0.0", "src/allocation/entrypoints/fast_app.py"]

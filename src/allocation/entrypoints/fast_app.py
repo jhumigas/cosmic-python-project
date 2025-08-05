@@ -1,6 +1,6 @@
 from datetime import date
 from typing import Optional
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from allocation.domain import commands, model
 from allocation.service_layer import handlers
 from allocation import bootstrap
@@ -19,22 +19,21 @@ async def root():
     return {"message": "Welcome to the allocation service"}
 
 
-@app.post("/add_batch")
-def add_batch(ref: str, sku: str, qty: int, eta: Optional[date]):
+@app.post("/add_batch", status_code=201)
+def add_batch(ref: str, sku: str, qty: int, eta: Optional[date] = None):
     event = commands.CreateBatch(
         ref,
         sku,
         qty,
         eta,
     )
-
     bus.handle(
         event,
     )
-    return "OK", 201
+    return "OK"
 
 
-@app.post("/allocate")
+@app.post("/allocate", status_code=202)
 def allocate_endpoint(orderid: str, sku: str, qty: int):
     try:
         event = commands.Allocate(
@@ -47,14 +46,15 @@ def allocate_endpoint(orderid: str, sku: str, qty: int):
             event,
         )
     except (model.OutOfStock, handlers.InvalidSku) as e:
-        return {"message": str(e)}, 400
+        # return {"message": str(e)}, 400
+        raise HTTPException(status_code=400, detail=str(e))
 
-    return "OK", 202
+    return "OK"
 
 
-@app.get("/allocations/{orderid}")
+@app.get("/allocations/{orderid}", status_code=200)
 def allocations_view_endpoint(orderid: str):
     result = views.allocations(orderid, bus.uow)
     if not result:
-        return "not found", 404
-    return result, 200
+        raise HTTPException(status_code=404, detail="Item not found")
+    return result
