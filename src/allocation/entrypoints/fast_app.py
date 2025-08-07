@@ -21,14 +21,14 @@ async def root():
 
 @app.post("/add_batch", status_code=201)
 def add_batch(ref: str, sku: str, qty: int, eta: Optional[date] = None):
-    event = commands.CreateBatch(
+    message = commands.CreateBatch(
         ref,
         sku,
         qty,
         eta,
     )
     bus.handle(
-        event,
+        message,
     )
     return "OK"
 
@@ -36,17 +36,16 @@ def add_batch(ref: str, sku: str, qty: int, eta: Optional[date] = None):
 @app.post("/allocate", status_code=202)
 def allocate_endpoint(orderid: str, sku: str, qty: int):
     try:
-        event = commands.Allocate(
+        message = commands.Allocate(
             orderid,
             sku,
             qty,
         )
 
         bus.handle(
-            event,
+            message,
         )
     except (model.OutOfStock, handlers.InvalidSku) as e:
-        # return {"message": str(e)}, 400
         raise HTTPException(status_code=400, detail=str(e))
 
     return "OK"

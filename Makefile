@@ -40,17 +40,33 @@ format: ## format code
 lint: ## lint code
 	uvx ruff check .
 
-.PHONY: unit-test
-unit-test:  ## run unit tests
+.PHONY: unit-tests
+unit-tests:  ## run unit tests
 	uv run pytest tests/unit
 
-.PHONY: integration-test
-integration-test:  ## run integration tests
+.PHONY: unit-tests-docker
+unit-tests-docker: docker-up  ## run unit tests in docker
+	docker compose run --rm --no-deps --entrypoint="uv run pytest tests/unit" allocation_api
+
+.PHONY: integration-tests
+integration-tests:  ## run integration tests
 	uv run pytest tests/integration
 
-.PHONY: e2e-test
-e2e-test:  ## run end-to-end tests
+.PHONY: integration-tests-docker
+integration-tests-docker: docker-up  ## run integration tests in docker
+	docker compose run --rm --no-deps --entrypoint="uv run pytest tests/integration" allocation_api
+
+.PHONY: e2e-tests
+e2e-tests:  ## run end-to-end tests
 	uv run pytest tests/e2e
+
+.PHONY: e2e-tests-docker
+e2e-tests-docker: docker-up  ## run end-to-end tests in docker
+	docker compose run --rm --no-deps --entrypoint="uv run pytest tests/e2e" allocation_api
+
+.PHONY: tests-docker
+tests-docker: docker-up  ## run unit tests with coverage in docker
+	docker compose run --rm --no-deps --entrypoint="uv run pytest tests" allocation_api
 
 .PHONY: test-coverage
 test-coverage: ## run unit tests with coverage and generate coverage xml and html report

@@ -33,8 +33,8 @@ def test_change_batch_quantity_leading_to_reallocation():
         with attempt:
             message = subscription.receive()
             subscription.acknowledge(message)
-            subscription.close()
             data = json.loads(message.data())
             logger.info("Received message: %s", data)
             assert data["orderid"] == orderid
             assert data["batchref"] in (earlier_batch, later_batch)
+    subscription.close()

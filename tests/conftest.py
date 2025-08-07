@@ -69,7 +69,7 @@ def wait_for_webapp_to_come_up():
             return requests.get(url)
         except ConnectionError:
             time.sleep(0.5)
-    pytest.fail("API never came up")
+    pytest.fail(f"API never came up on {url}")
 
 
 @pytest.fixture(scope="session")

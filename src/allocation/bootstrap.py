@@ -6,13 +6,13 @@ from allocation.service_layer import handlers, messagebus, unit_of_work
 
 # Bootrapping app and initializing dependencies
 def bootstrap(
-    start_orm: bool = True,  # (1)
+    start_orm: bool = True,
     uow: unit_of_work.AbstractUnitOfWork = unit_of_work.SqlAlchemyUnitOfWork(),
     notifications: Optional[notifications.AbstractNotifications] = None,
     publish: Callable = eventpublisher.publish,
 ) -> messagebus.MessageBus:
     if start_orm:
-        orm.start_mappers()  # (1)
+        orm.start_mappers()
 
     injected_event_handlers = {
         events.Allocated: [

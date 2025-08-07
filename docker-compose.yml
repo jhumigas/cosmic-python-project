@@ -31,11 +31,14 @@ services:
       - allocation_consumer
     environment:
       - DB_HOST=postgres
+      - DB_PORT=5432
       - DB_PASSWORD=abc123
-      - API_HOST=api
-      - API_PORT=8000
       - PULSAR_HOST=broker
       - PULSAR_PORT=6652
+      - EMAIL_HOST=mailhog
+      - EMAIL_PORT=1025
+      - API_HOST=allocation_api
+      - API_PORT=8000
     volumes:
       - ./src:/src
       - ./tests:/tests

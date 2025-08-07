@@ -14,7 +14,7 @@ def is_valid_sku(sku, batches):
 
 
 def add_batch(
-    event: events.BatchCreated,
+    event: commands.CreateBatch,
     uow: unit_of_work.AbstractUnitOfWork,  # (1)
 ):
     with uow:
@@ -27,7 +27,7 @@ def add_batch(
 
 
 def allocate(
-    event: events.AllocationRequired,
+    event: commands.Allocate,
     uow: unit_of_work.AbstractUnitOfWork,  # (1)
 ) -> Optional[str]:
     line = model.OrderLine(event.orderid, event.sku, event.qty)
@@ -64,7 +64,7 @@ def send_out_of_stock_notification(
 
 
 def change_batch_quantity(
-    event: events.BatchQuantityChanged,
+    event: commands.ChangeBatchQuantity,
     uow: unit_of_work.AbstractUnitOfWork,
 ):
     logger.info("Changing batch quantity for %s to %s", event.ref, event.qty)
