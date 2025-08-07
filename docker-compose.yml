@@ -1,26 +1,6 @@
 services:
 
-  redis_pubsub:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: allocation-image
-    depends_on:
-      - postgres
-      - redis
-    environment:
-      - DB_HOST=postgres
-      - DB_PASSWORD=abc123
-      - REDIS_HOST=redis
-      - PYTHONDONTWRITEBYTECODE=1
-    volumes:
-      - ./src:/src
-      - ./tests:/tests
-    entrypoint:
-      - python
-      - src/allocation/entrypoints/redis_eventconsumer.py
-
-  pulsar_consumer:
+  allocation_consumer:
     build:
       context: .
       dockerfile: Dockerfile
@@ -33,27 +13,29 @@ services:
 
     environment:
       - DB_HOST=postgres
+      - DB_PORT=5432
       - DB_PASSWORD=abc123
       - PULSAR_HOST=broker
+      - PULSAR_PORT=6652
       - PYTHONDONTWRITEBYTECODE=1
     volumes:
       - ./src:/src
       - ./tests:/tests
     entrypoint:
       - python
-      - src/allocation/entrypoints/pulsar_eventconsumer.py
+      - src/allocation/entrypoints/eventconsumer.py
 
-  api:
+  allocation_api:
     image: allocation-image
     depends_on:
-      - redis_pubsub
-      - pulsar_consumer
+      - allocation_consumer
     environment:
       - DB_HOST=postgres
       - DB_PASSWORD=abc123
       - API_HOST=api
-      - REDIS_HOST=redis
+      - API_PORT=8000
       - PULSAR_HOST=broker
+      - PULSAR_PORT=6652
     volumes:
       - ./src:/src
       - ./tests:/tests
@@ -68,10 +50,6 @@ services:
     ports:
       - "54321:5432"
 
-  redis:
-    image: redis:alpine
-    ports:
-      - "63791:6379"
   mailhog:
     image: mailhog/mailhog
     ports:

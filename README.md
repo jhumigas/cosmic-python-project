@@ -30,6 +30,14 @@ Make sure you have:
 - [Docker](https://www.docker.com/get-started/) or a docker container manager (use [colima](https://github.com/abiosoft/colima#installation) for macOS)
 - [dbeaver](https://dbeaver.io/) optional database tool to manage your database
 
+
+The tech stack used:
+
+- [FastAPI](https://fastapi.tiangolo.com/) as our backend
+- [Postgres](https://www.postgresql.org/) as our database
+- [Pulsar](https://pulsar.apache.org/) as our message broker
+
+
 ## Setup local env
 
 ```sh
@@ -71,7 +79,7 @@ make tests
 │       ├── __init__.py
 │       ├── entrypoints                 <-- Main script to run the application
 │       │   ├── fast_app.py             <-- Entrypoint to run a REST API
-│       │   └── redis_eventconsumer.py  <-- Entrypoint to run an event consumer
+│       │   └── eventconsumer.py        <-- Entrypoint to run an event consumer
 │       ├── service_layer               <-- Orchestration layer
 │       │   ├── __init__.py
 │       │   ├── handlers.py             <-- Set of handlers to process commands and events
@@ -82,7 +90,7 @@ make tests
 │       │   ├── email.py                <-- Email module to send email when needed
 │       │   ├── notifications.py        <-- Notification interface and classes used to produce notifications when needed
 │       │   ├── orm.py                  <-- Actual definition of database tables and mappings to our objects
-│       │   ├── redis_eventpublisher.py <-- Simple publisher to redis
+│       │   ├── eventpublisher.py       <-- Event publisher
 │       │   └── repository.py           <-- Actual layer to handle persistence
 │       ├── domain
 │       │   ├── __init__.py

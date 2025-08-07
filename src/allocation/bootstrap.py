@@ -1,5 +1,5 @@
 from typing import Callable, Optional
-from allocation.adapters import notifications, orm, pulsar_eventpublisher
+from allocation.adapters import eventpublisher, notifications, orm
 from allocation.domain import commands, events
 from allocation.service_layer import handlers, messagebus, unit_of_work
 
@@ -9,8 +9,7 @@ def bootstrap(
     start_orm: bool = True,  # (1)
     uow: unit_of_work.AbstractUnitOfWork = unit_of_work.SqlAlchemyUnitOfWork(),
     notifications: Optional[notifications.AbstractNotifications] = None,
-    # publish: Callable = redis_eventpublisher.publish,
-    publish: Callable = pulsar_eventpublisher.publish,
+    publish: Callable = eventpublisher.publish,
 ) -> messagebus.MessageBus:
     if start_orm:
         orm.start_mappers()  # (1)
