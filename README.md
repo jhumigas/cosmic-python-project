@@ -8,8 +8,8 @@ We start from a simple e-commerce use case: the business decides to implement an
 For that purpose, we start with a simple architecture with:
 
 - **domain model**: Contains the core model of our domain (with just order lines and batches). Here we define value objects and entities to structure the concepts we work with
-- **repository**: This layer enables interaction with storage. We also implement an ORM
-- **service layer**: This is the part that orchestrates the steps when we have to perform an operation like allocation
+- **repository**: This layer enables interaction with our storage. We also implement an ORM to bridge our app with our database
+- **service layer**: This is the part that orchestrates the steps when we have to perform operations like creating batch of products, allocations, etc
 
 Then to have the most consistent interactions with our database, we introduce:
 
