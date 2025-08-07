@@ -62,7 +62,7 @@ tests: docker-down docker-build docker-up
 
 .PHONY: docker-build
 docker-build: ## build containers
-	docker compose build
+	docker compose build --no-cache allocation_api allocation_consumer
 
 .PHONY: docker-up
 docker-up: ## start containers
@@ -71,6 +71,11 @@ docker-up: ## start containers
 .PHONY: docker-down
 docker-down:  ## stop containers
 	docker compose down
+
+.PHONY: docker-clean
+docker-clean: docker-down ## clean containers
+	docker compose rm -f
+	docker image prune -f
 
 .PHONY: docker-logs
 docker-logs: ## show logs

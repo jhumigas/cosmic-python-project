@@ -1,48 +1,46 @@
 services:
 
-  redis_pubsub:
+  allocation_consumer:
     build:
       context: .
       dockerfile: Dockerfile
     image: allocation-image
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_started
+      broker:
+        condition: service_started
+
     environment:
       - DB_HOST=postgres
+      - DB_PORT=5432
       - DB_PASSWORD=abc123
-      - REDIS_HOST=redis
+      - PULSAR_HOST=broker
+      - PULSAR_PORT=6652
       - PYTHONDONTWRITEBYTECODE=1
     volumes:
       - ./src:/src
       - ./tests:/tests
     entrypoint:
       - python
-      - src/allocation/entrypoints/redis_eventconsumer.py
+      - src/allocation/entrypoints/eventconsumer.py
 
-  api:
+  allocation_api:
     image: allocation-image
     depends_on:
-      - redis_pubsub
+      - allocation_consumer
     environment:
       - DB_HOST=postgres
       - DB_PASSWORD=abc123
       - API_HOST=api
-      - REDIS_HOST=redis
-      - PYTHONDONTWRITEBYTECODE=1
-      - FLASK_APP=src/allocation/entrypoints/flask_app.py
-      - FLASK_DEBUG=1
-      - PYTHONUNBUFFERED=1
+      - API_PORT=8000
+      - PULSAR_HOST=broker
+      - PULSAR_PORT=6652
     volumes:
       - ./src:/src
       - ./tests:/tests
-    entrypoint:
-      - flask
-      - run
-      - --host=0.0.0.0
-      - --port=80
     ports:
-      - "5005:80"
+      - "5005:8000"
 
   postgres:
     image: postgres:14
@@ -52,24 +50,103 @@ services:
     ports:
       - "54321:5432"
 
-  redis:
-    image: redis:alpine
-    ports:
-      - "63791:6379"
   mailhog:
     image: mailhog/mailhog
     ports:
       - "11025:1025"
       - "18025:8025"
 
-  pulsar:
+  # Start zookeeper
+  zookeeper:
     image: apachepulsar/pulsar:latest
-    command: >
-      /bin/bash -c "bin/apply-config-from-env.py conf/standalone.conf &&
-      bin/pulsar standalone"
-    ports:
-      - "6651:6650"
-      - "8081:8080"
+    container_name: zookeeper
+    restart: on-failure
     volumes:
-      - ./.docker/pulsar_data:/pulsar/data
-      - ./.docker/pulsar_logs:/pulsar/logs
+      - ./.docker/zookeeper:/pulsar/data/zookeeper
+    environment:
+      - metadataStoreUrl=zk:zookeeper:2181
+      - PULSAR_MEM=-Xms256m -Xmx256m -XX:MaxDirectMemorySize=256m
+    command:
+      - bash
+      - -c
+      - |
+        bin/apply-config-from-env.py conf/zookeeper.conf && \
+        bin/generate-zookeeper-config.sh conf/zookeeper.conf && \
+        exec bin/pulsar zookeeper
+    healthcheck:
+      test: ["CMD", "bin/pulsar-zookeeper-ruok.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  # Init cluster metadata
+  pulsar-init:
+    container_name: pulsar-init
+    hostname: pulsar-init
+    image: apachepulsar/pulsar:latest
+    command:
+      - bash
+      - -c
+      - |
+        bin/pulsar initialize-cluster-metadata \
+        --cluster cluster-a \
+        --zookeeper zookeeper:2181 \
+        --configuration-store zookeeper:2181 \
+        --web-service-url http://broker:8080 \
+        --broker-service-url pulsar://broker:6650
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+
+  # Start bookie
+  bookie:
+    image: apachepulsar/pulsar:latest
+    container_name: bookie
+    restart: on-failure
+    environment:
+      - clusterName=cluster-a
+      - zkServers=zookeeper:2181
+      - metadataServiceUri=metadata-store:zk:zookeeper:2181
+      # otherwise every time we run docker compose uo or down we fail to start due to Cookie
+      # See: https://github.com/apache/bookkeeper/blob/405e72acf42bb1104296447ea8840d805094c787/bookkeeper-server/src/main/java/org/apache/bookkeeper/bookie/Cookie.java#L57-68
+      - advertisedAddress=bookie
+      - BOOKIE_MEM=-Xms512m -Xmx512m -XX:MaxDirectMemorySize=256m
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+      pulsar-init:
+        condition: service_completed_successfully
+    # Map the local directory to the container to avoid bookie startup failure due to insufficient container disks.
+    volumes:
+      - ./.docker/bookkeeper:/pulsar/data/bookkeeper
+    command: bash -c "bin/apply-config-from-env.py conf/bookkeeper.conf && exec bin/pulsar bookie"
+
+  # Start broker
+  broker:
+    image: apachepulsar/pulsar:latest
+    container_name: broker
+    hostname: broker
+    restart: on-failure
+    environment:
+      - metadataStoreUrl=zk:zookeeper:2181
+      - zookeeperServers=zookeeper:2181
+      - clusterName=cluster-a
+      - managedLedgerDefaultEnsembleSize=1
+      - managedLedgerDefaultWriteQuorum=1
+      - managedLedgerDefaultAckQuorum=1
+      - brokerServicePort=6650
+      - advertisedAddress=broker
+      - advertisedListeners=external:pulsar://127.0.0.1:6651,docker:pulsar://broker:6652
+      - bindAddresses=external:pulsar://0.0.0.0:6651,docker:pulsar://0.0.0.0:6652
+      - PULSAR_MEM=-Xms512m -Xmx512m -XX:MaxDirectMemorySize=256m
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+      bookie:
+        condition: service_started
+    ports:
+      - "6650:6650"
+      - "6651:6651"
+      - "6652:6652"
+      - "8080:8080"
+    command: bash -c "bin/apply-config-from-env.py conf/broker.conf && exec bin/pulsar broker"

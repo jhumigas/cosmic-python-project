@@ -1,4 +1,5 @@
 from typing import Callable, Optional
+from allocation.logger import logger
 from allocation.adapters import notifications
 from allocation.domain import commands, events, model
 from allocation.service_layer import unit_of_work
@@ -30,6 +31,7 @@ def allocate(
     uow: unit_of_work.AbstractUnitOfWork,  # (1)
 ) -> Optional[str]:
     line = model.OrderLine(event.orderid, event.sku, event.qty)
+    logger.info("Allocating %s", line)
     with uow:
         product = uow.products.get(sku=event.sku)
         if product is None:
@@ -65,6 +67,7 @@ def change_batch_quantity(
     event: events.BatchQuantityChanged,
     uow: unit_of_work.AbstractUnitOfWork,
 ):
+    logger.info("Changing batch quantity for %s to %s", event.ref, event.qty)
     with uow:
         product = uow.products.get_by_batchref(batchref=event.ref)
         product.change_batch_quantity(ref=event.ref, qty=event.qty)
@@ -75,7 +78,9 @@ def publish_allocated_event(
     event: events.Allocated,
     publish: Callable,
 ):
+    logger.info("Publishing allocated event for order %s", event.orderid)
     publish("line_allocated", event)
+    logger.info("Published allocated event for order %s", event.orderid)
 
 
 def add_allocation_to_read_model(

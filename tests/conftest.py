@@ -4,8 +4,8 @@ import subprocess
 import time
 from pathlib import Path
 
+import pulsar
 import pytest
-import redis
 import requests
 from requests.exceptions import ConnectionError
 from sqlalchemy.exc import OperationalError
@@ -72,12 +72,6 @@ def wait_for_webapp_to_come_up():
     pytest.fail("API never came up")
 
 
-@retry(stop=stop_after_delay(10))
-def wait_for_redis_to_come_up():
-    r = redis.Redis(**config.get_redis_host_and_port())
-    return r.ping()
-
-
 @pytest.fixture(scope="session")
 def postgres_db():
     engine = create_engine(config.get_postgres_uri())
@@ -103,13 +97,20 @@ def restart_api():
     wait_for_webapp_to_come_up()
 
 
+@retry(stop=stop_after_delay(10))
+def wait_for_pulsar_to_come_up():
+    pulsar_client = pulsar.Client(config.get_pulsar_uri(), operation_timeout_seconds=30)
+    pulsar_client.close()
+    return True
+
+
 @pytest.fixture
-def restart_redis_pubsub():
-    wait_for_redis_to_come_up()
+def restart_pulsar_pubsub():
+    wait_for_pulsar_to_come_up()
     if not shutil.which("docker-compose"):
         print("skipping restart, assumes running in container")
         return
     subprocess.run(
-        ["docker-compose", "restart", "-t", "0", "redis_pubsub"],
+        ["docker-compose", "restart", "-t", "0", "pulsar_pubsub"],
         check=True,
     )

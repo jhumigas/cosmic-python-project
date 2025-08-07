@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import List, Optional, Set, Union
 
+from allocation.logger import logger
 from allocation.domain import commands, events
 
 
@@ -87,6 +88,7 @@ class Product:
             batch = next(b for b in sorted(self.batches) if b.can_allocate(line))
             batch.allocate(line)
             self.version_number += 1
+            logger.info("Allocated %s to batch %s", line, batch.reference)
             self.events.append(
                 events.Allocated(
                     orderid=line.orderid,

@@ -40,7 +40,7 @@ class MessageBus:
                 continue
 
     def handle_command(self, command: commands.Command):
-        logger.debug("handling command %s", command)
+        logger.info("handling command %s", command)
         try:
             handler = self.command_handlers[type(command)]
             handler(command)
