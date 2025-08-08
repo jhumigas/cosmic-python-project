@@ -1,7 +1,12 @@
 # Architecture Patterns with Python
 
 This repository is a showcase of architectural patterns widely used in industrial projects.
-We start from a simple e-commerce use case: the business decides to implement an exciting new way of allocating stock. Instead of just considering goods available in the warehouse, we will treat the goods on ships as real stock and part of our inventory, just with slightly longer lead times. Fewer goods will appear to be out of stock, we’ll sell more, and the business can save money by keeping lower inventory in the domestic warehouse.
+
+We start from a simple e-commerce use case: 
+
+> the business decides to implement an exciting new way of allocating stock. Instead of just considering goods available in the warehouse, we will treat the goods on ships as real stock and part of our inventory, just with slightly longer lead times. Fewer goods will appear to be out of stock, we’ll sell more, and the business can save money by keeping lower inventory in the domestic warehouse.
+
+> 📖 Based on: [Cosmic Python book](https://www.cosmicpython.com/)
 
 ## Introduction
 
@@ -108,3 +113,9 @@ make tests
 │   └── unit
 └── uv.lock
 ```
+
+## References
+
+* [Cosmic Python book](https://www.cosmicpython.com/)
+* [Run a Pulsar cluster locally with Docker Compose](https://pulsar.apache.org/docs/next/getting-started-docker-compose/)
+* [Configuring mulitple avertised listeners on pulsar](https://pulsar.apache.org/docs/next/concepts-multiple-advertised-listeners/)
